@@ -1,7 +1,14 @@
-package main
+package users
 
-import "fmt"
+import "time"
 
-func main() {
-	fmt.Println("vim-go")
+type User struct {
+	ID       uint64
+	Login    string
+	Email    string
+	Password string
+	Karma    int
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

@@ -1,4 +1,6 @@
-package post
+package posts
+
+import "time"
 
 type PostType uint8
 
@@ -9,13 +11,20 @@ const (
 )
 
 type Post struct {
-	ID string
+	ID uint64
 
 	Type PostType
 
 	Title string
 	Body  string
 
-	Ups   uint64
+	Ups   int64
 	Downs int64
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (p Post) Validate() []error {
+	return nil
 }

@@ -5,18 +5,21 @@ create table if not exists users (
         email_verified boolean default false,
         password text not null,
         active boolean default true,
-	karma numeric default 0
+	karma numeric default 0,
+	created_at timestamptz default now(),
+	updated_at timestamptz
 );
 
 create table if not exists posts (
         id bigserial primary key,
-        uid text unique not null,
         type integer not null,
         title text not null,
         body text not null,
         ups numeric not null default 0,
         downs numeric not null default 0,
         user_id bigserial not null references users (id) on delete cascade
+	created_at timestamptz default now(),
+	updated_at timestamptz
 );
 
 create table if not exists comments (
@@ -27,4 +30,6 @@ create table if not exists comments (
         user_id bigserial not null references users (id),
         ups numeric default 0,
         downs numeric default 0
+	created_at timestamptz default now(),
+	updated_at timestamptz
 );
