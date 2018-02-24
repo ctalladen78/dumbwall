@@ -9,78 +9,46 @@ import (
 )
 
 const (
-	// defaultTTL это время токена поумолчанию - 1 час,
 	defaultTTL = 3600
 )
 
 // Auth имеет метод GRPC преобзавателя
 type Auth struct {
-	AuthConfig
+	ttl int64
 
-	// публичные и приватные ключи
-	PubKey  *rsa.PublicKey
-	PrivKey *rsa.PrivateKey
+	domain string
+
+	pubKey  *rsa.PublicKey
+	privKey *rsa.PrivateKey
 }
 
-// AuthConfig конфигурации для Auth
-type AuthConfig struct {
-	PubKeyPath  string
-	PrivKeyPath string
-
-	// время для токена
-	TTL int64
-
-	// домен на который дается токен
-	Domain string
-}
-
-func (a *Auth) LoadKeys() error {
-	var (
-		err error
-		key []byte
-	)
-
-	// загружаем приватный ключ
-	key, err = ioutil.ReadFile(a.PrivKeyPath)
-	if err != nil {
-		return err
-	}
-
-	a.PrivKey, err = jwt.ParseRSAPrivateKeyFromPEM(key)
-	if err != nil {
-		return err
-	}
-
-	// загружаем публичный ключ
-	key, err = ioutil.ReadFile(a.PubKeyPath)
-	if err != nil {
-		return err
-	}
-
-	a.PubKey, err = jwt.ParseRSAPublicKeyFromPEM(key)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// NewAuth принимает конфигурации и создает обьект с методом преборазателя для GRPC
-func NewAuth(c AuthConfig) (*Auth, error) {
-	auth := &Auth{
-		AuthConfig: c,
-	}
-
-	err := auth.LoadKeys()
+func New(certsDir, domain string, ttl int64) (*Auth, error) {
+	key, err := ioutil.ReadFile(path.Join(certsDir, "private.key"))
 	if err != nil {
 		return nil, err
 	}
 
-	if auth.TTL == 0 {
-		auth.TTL = defaultTTL
+	privKey, err := jwt.ParseRSAPrivateKeyFromPEM(key)
+	if err != nil {
+		return nil, err
 	}
 
-	return auth, nil
+	key, err = ioutil.ReadFile(path.Join(certsDir, "public.key"))
+	if err != nil {
+		return nil, err
+	}
+
+	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Auth{
+		ttl:     ttl,
+		domain:  domain,
+		privKey: privKey,
+		pubKey:  pubKey,
+	}, nil
 }
 
 func (a *Auth) defaultMapClaims() jwt.MapClaims {
@@ -105,7 +73,7 @@ func (a *Auth) CreateJWTToken(claims map[string]string) (string, error) {
 }
 
 // Authorize это преобразаватель который проверяет токен и валидирует его.
-func (a *Auth) Authorize(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func (a *Auth) Authorize() (interface{}, error) {
 	var newCtx context.Context
 	var err error
 
