@@ -1,0 +1,20 @@
+{{ define "new_post" }}
+	{{ template "header" }}
+
+	<form method="post" action="/posts/create">
+		<label for="title">title</label>
+		<input required type="text" name="title" >
+
+		<label for="body">text</label>
+		<input required type="text" name="body" >
+
+		or
+
+		<label for="link">link</label>
+		<input required type="text" name="body" >
+
+		<button type="submit">Create a post</button>
+	</form>
+	
+	{{ template "footer" }}
+{{ end }}
