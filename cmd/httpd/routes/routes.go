@@ -1,19 +1,24 @@
 package routes
 
-import "github.com/maksadbek/dumbwall/internal/database"
+import (
+	"html/template"
+
+	"github.com/maksadbek/dumbwall/internal/database"
+)
 
 type Routes struct {
 	db *database.Database
 
-	templates *html.Template
+	templates *template.Template
 }
 
-func New(templatesDirPath string) *Routes {
+func New(templatesDirPath string) (*Routes, error) {
 	templates, err := template.ParseFiles(templatesDirPath)
 	if err != nil {
 		return nil, err
 	}
 
-	// init
-	return &Routes{}
+	return &Routes{
+		templates: templates,
+	}, nil
 }

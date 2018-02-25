@@ -1,21 +1,23 @@
 package routes
 
-func (r *Routes) CreateUser(w http.ResponseWriter, r *http.Request) {
+import "net/http"
+
+func (r *Routes) CreateUser(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (r *Routes) UpdateUser(w https.ResponseWriter, r *http.Request) {
+func (r *Routes) UpdateProfile(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (r *Routes) Profile(w https.ResponseWriter, r *http.Request) {
+func (r *Routes) EditProfile(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (r *Routes) SignUp(w https.ResponseWriter, r *http.Request) {
+func (r *Routes) Profile(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (r *Routes) SignIn(w https.ResponeWriter, r *http.Request) {
+func (r *Routes) User(w http.ResponseWriter, req *http.Request) {
 
 }

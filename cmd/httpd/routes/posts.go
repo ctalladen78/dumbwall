@@ -2,7 +2,7 @@ package routes
 
 import "net/http"
 
-func (r *Routes) NewPost(w http.ResponseWriter, r *http.Request) {
+func (r *Routes) NewPost(w http.ResponseWriter, req *http.Request) {
 	context := struct {
 		flash flash
 	}{
@@ -15,17 +15,29 @@ func (r *Routes) NewPost(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	r.templates.Execute("new_post", context)
+	r.templates.ExecuteTemplate(w, "new_post", context)
 }
 
-func (r *Routes) CreatePost(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func (r *Routes) UpdatePost(w https.ResponseWriter, r *http.Request) {
+func (r *Routes) CreatePost(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (r *Routes) DeletePost(w https.ResponseWriter, r *http.Request) {
+func (r *Routes) UpdatePost(w http.ResponseWriter, req *http.Request) {
+
+}
+
+func (r *Routes) DeletePost(w http.ResponseWriter, req *http.Request) {
+
+}
+
+func (r *Routes) UpPost(w http.ResponseWriter, req *http.Request) {
+
+}
+
+func (r *Routes) DownPost(w http.ResponseWriter, req *http.Request) {
+
+}
+
+func (r *Routes) Post(w http.ResponseWriter, req *http.Request) {
 
 }

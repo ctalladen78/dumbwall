@@ -1,7 +1,18 @@
 package main
 
-import "fmt"
+import "net/http"
 
 func main() {
-	fmt.Println("vim-go")
+	server := new(httpd)
+
+	err := server.init()
+	if err != nil {
+		panic(err)
+	}
+
+	http.Handle("/", server.mux)
+
+	if err = http.ListenAndServe(":1234", nil); err != nil {
+		panic(err)
+	}
 }
