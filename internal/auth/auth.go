@@ -1,11 +1,12 @@
 package auth
 
 import (
-	"context"
 	"crypto/rsa"
 	"io/ioutil"
-	"strings"
+	"path"
 	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 const (
@@ -55,7 +56,7 @@ func (a *Auth) defaultMapClaims() jwt.MapClaims {
 	mapClaims := jwt.MapClaims{}
 
 	mapClaims["iat"] = time.Now().Unix()
-	mapClaims["exp"] = time.Now().Add(time.Second * time.Duration(a.TTL)).Unix()
+	mapClaims["exp"] = time.Now().Add(time.Second * time.Duration(a.ttl)).Unix()
 
 	return mapClaims
 }
@@ -69,39 +70,23 @@ func (a *Auth) CreateJWTToken(claims map[string]string) (string, error) {
 
 	t := jwt.NewWithClaims(jwt.SigningMethodRS256, mc)
 
-	return t.SignedString(a.PrivKey)
+	return t.SignedString(a.privKey)
 }
 
-// Authorize это преобразаватель который проверяет токен и валидирует его.
-func (a *Auth) Authorize() (interface{}, error) {
-	var newCtx context.Context
-	var err error
-
-	md, ok := metadata.FromIncomingContext(ctx)
-
-	bearerToken, ok := md["authorization"]
-	if len(bearerToken) == 0 || !ok {
-		newCtx = context.WithValue(ctx, "authorized", false)
-		return handler(newCtx, req)
-	}
-
+func (a *Auth) Validate(token string) (map[string]interface{}, error) {
 	mapClaims := jwt.MapClaims{}
 
-	t := strings.TrimPrefix(bearerToken[0], "Bearer ")
-
-	token, err := jwt.ParseWithClaims(t, &mapClaims, func(token *jwt.Token) (interface{}, error) {
-		return a.PubKey, nil
+	t, err := jwt.ParseWithClaims(token, &mapClaims, func(token *jwt.Token) (interface{}, error) {
+		return a.pubKey, nil
 	})
 
 	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, "failed to parse token %v", err)
+		return mapClaims, err
 	}
 
-	if !token.Valid {
-		return nil, grpc.Errorf(codes.Unauthenticated, "invalid token")
+	if !t.Valid {
+		return mapClaims, err
 	}
 
-	newCtx = context.WithValue(ctx, "claims", mapClaims)
-
-	return handler(newCtx, req)
+	return mapClaims, nil
 }
