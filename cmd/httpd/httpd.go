@@ -11,12 +11,13 @@ type httpd struct {
 	mux *pat.PatternServeMux
 }
 
-func (h *httpd) init() error {
-	r, err := routes.New("/etc/templates")
+func (h *httpd) init(etcPath string) error {
+	r, err := routes.New(etcPath)
 	if err != nil {
 		return err
 	}
 
+	println("init httpd")
 	m := pat.New()
 
 	m.Get("/posts/new", http.HandlerFunc(r.NewPost))

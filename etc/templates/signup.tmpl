@@ -1,0 +1,21 @@
+{{ define "signup" }}
+{{ template "header" }}
+
+<form method=post action="/users/create">
+	<label for="login">login</label>
+	<input required type="text" name="login">
+
+	<label for="email">email</label>
+	<input required type="email" name="email">
+
+	<label for="password1">password</label>
+	<input required type="password" name="password1">
+
+	<label for="password2">repeat password</label>
+	<input required type="password" name="password2">
+
+	<button type="submit">Create a post</button>
+</form>
+
+{{ template "footer" }}
+{{ end }}
