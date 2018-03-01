@@ -11,6 +11,7 @@ func (d *Database) CreateUser(u users.User) (users.User, error) {
 	err := psql.Insert("users").
 		Columns("login", "email", "password").
 		Values(u.Login, u.Email, u.Password).
+		Suffix("returning id").
 		RunWith(d.p.DB).
 		QueryRow().
 		Scan(&id)

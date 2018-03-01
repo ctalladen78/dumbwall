@@ -2,9 +2,9 @@ package routes
 
 import (
 	"html/template"
-	"path"
 
 	"github.com/maksadbek/dumbwall/internal/auth"
+	"github.com/maksadbek/dumbwall/internal/config"
 	"github.com/maksadbek/dumbwall/internal/database"
 )
 
@@ -16,31 +16,21 @@ type Routes struct {
 	templates *template.Template
 }
 
-func New(etcPath string) (*Routes, error) {
-	templatesDir := path.Join(etcPath, "templates")
-	templates, err := template.ParseFiles(
-		templatesDir+"/header.tmpl",
-		templatesDir+"/footer.tmpl",
-		templatesDir+"/signup.tmpl",
-		templatesDir+"/index.tmpl",
-		templatesDir+"/list.tmpl",
-		templatesDir+"/posts/"+"/new.tmpl",
-		templatesDir+"/posts/"+"/view.tmpl",
-		templatesDir+"/users/"+"/new.tmpl",
-		templatesDir+"/users/"+"/profile.tmpl",
-	)
+func New(c config.Routes, db *database.Database) (*Routes, error) {
+	templates, err := template.ParseFiles(c.Templates...)
 	if err != nil {
 		return nil, err
 	}
 
-	authorizer, err := auth.New(path.Join(etcPath, "certs"), "dumbwall.xyz", 3600)
+	authorizer, err := auth.New(c.Certs, "dumbwall.xyz", 3600)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Routes{
+		db:              db,
 		templates:       templates,
 		auth:            authorizer,
-		recaptchaSecret: "6Le3skkUAAAAAERiyo56lZIgtHOViEw9vyf9ukyi",
+		recaptchaSecret: c.RecaptchaSecret,
 	}, nil
 }

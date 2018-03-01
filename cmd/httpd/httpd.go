@@ -2,9 +2,12 @@ package main
 
 import (
 	"net/http"
+	"path"
 
 	"github.com/bmizerany/pat"
 	"github.com/maksadbek/dumbwall/cmd/httpd/routes"
+	"github.com/maksadbek/dumbwall/internal/config"
+	"github.com/maksadbek/dumbwall/internal/database"
 )
 
 type httpd struct {
@@ -12,12 +15,23 @@ type httpd struct {
 }
 
 func (h *httpd) init(etcPath string) error {
-	r, err := routes.New(etcPath)
+	println("init httpd")
+
+	c, err := config.New(path.Join(etcPath, "dumbwall.toml"))
 	if err != nil {
 		return err
 	}
 
-	println("init httpd")
+	db, err := database.New(c.Database)
+	if err != nil {
+		return err
+	}
+
+	r, err := routes.New(c.Routes, db)
+	if err != nil {
+		return err
+	}
+
 	m := pat.New()
 
 	m.Get("/posts/new", http.HandlerFunc(r.NewPost))

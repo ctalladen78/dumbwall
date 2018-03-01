@@ -11,7 +11,7 @@ type Postgres struct {
 }
 
 func New(dsn string) (*Postgres, error) {
-	db, err := sql.Open("postgresql", dsn)
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err
 	}

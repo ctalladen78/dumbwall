@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/maksadbek/dumbwall/internal/config"
 	"github.com/maksadbek/dumbwall/internal/platform/postgres"
 	"github.com/maksadbek/dumbwall/internal/platform/redis"
 	sq "github.com/masterminds/squirrel"
@@ -13,6 +14,21 @@ type Database struct {
 	p *postgres.Postgres
 }
 
-func New() (*Database, error) {
-	return &Database{}, nil
+func New(c config.Database) (*Database, error) {
+	println("init database")
+
+	p, err := postgres.New(c.Postgres.DSN)
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.DB.Ping()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Database{
+		r: redis.New(c.Redis.Addrs[0], 10, 10, 100),
+		p: p,
+	}, nil
 }

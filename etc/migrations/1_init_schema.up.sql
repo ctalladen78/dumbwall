@@ -17,7 +17,7 @@ create table if not exists posts (
         body text not null,
         ups numeric not null default 0,
         downs numeric not null default 0,
-        user_id bigserial not null references users (id) on delete cascade
+        user_id bigserial not null references users (id) on delete cascade,
 	created_at timestamptz default now(),
 	updated_at timestamptz
 );
@@ -29,7 +29,7 @@ create table if not exists comments (
         post_id bigserial not null references posts (id) on delete cascade,
         user_id bigserial not null references users (id),
         ups numeric default 0,
-        downs numeric default 0
+        downs numeric default 0,
 	created_at timestamptz default now(),
 	updated_at timestamptz
 );

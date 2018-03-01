@@ -1,0 +1,20 @@
+[routes]
+	templates = [
+		"../../etc/templates/footer.tmpl",
+		"../../etc/templates/header.tmpl",
+		"../../etc/templates/index.tmpl",
+		"../../etc/templates/list.tmpl",
+		"../../etc/templates/signup.tmpl",
+		"../../etc/templates/posts/new.tmpl",
+		"../../etc/templates/posts/view.tmpl",
+		"../../etc/templates/users/new.tmpl",
+		"../../etc/templates/users/profile.tmpl",
+	]
+	certs = "../../etc/certs"
+	recaptcha_secret = "secret"
+
+[database]
+	[database.postgres]
+		dsn = "postgres://max@localhost:5432/dumbwall?sslmode=disable"
+	[database.redis]
+		addrs = ["localhost:6379"]

@@ -2,10 +2,12 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 
 	valid "github.com/asaskevich/govalidator"
+	"github.com/maksadbek/dumbwall/internal/users"
 )
 
 func (r *Routes) CreateUser(w http.ResponseWriter, req *http.Request) {
@@ -67,6 +69,20 @@ func (r *Routes) CreateUser(w http.ResponseWriter, req *http.Request) {
 		r.templates.ExecuteTemplate(w, "signup", f)
 		return
 	}
+
+	user, err := r.db.CreateUser(users.User{
+		Login:    req.Form.Get("login"),
+		Email:    req.Form.Get("email"),
+		Password: req.Form.Get("password1"),
+	})
+	if err != nil {
+		println(err.Error())
+		return
+	}
+
+	fmt.Println(user)
+
+	return
 }
 
 func (r *Routes) UpdateProfile(w http.ResponseWriter, req *http.Request) {
