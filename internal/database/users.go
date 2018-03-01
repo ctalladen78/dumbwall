@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/lib/pq"
 	"github.com/maksadbek/dumbwall/internal/users"
 	sq "github.com/masterminds/squirrel"
 )
@@ -28,6 +29,8 @@ func (d *Database) CreateUser(u users.User) (users.User, error) {
 func (d *Database) GetUser(id uint64) (users.User, error) {
 	var u users.User
 
+	var createdAt, updatedAt pq.NullTime
+
 	err := psql.
 		Select(
 			"login",
@@ -43,14 +46,17 @@ func (d *Database) GetUser(id uint64) (users.User, error) {
 		Scan(
 			&u.Login,
 			&u.Email,
-			&u.CreatedAt,
-			&u.UpdatedAt,
+			&createdAt,
+			&updatedAt,
 			&u.Karma,
 		)
 
 	if err != nil {
 		return u, err
 	}
+
+	u.CreatedAt = createdAt.Time
+	u.UpdatedAt = updatedAt.Time
 
 	return u, nil
 }

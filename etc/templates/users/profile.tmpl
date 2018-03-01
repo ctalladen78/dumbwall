@@ -1,0 +1,9 @@
+{{ define "profile" }}
+	{{ template "header" }}
+		<ul>
+			<li>Login: {{ .Login }}</li>
+			<li>Email: {{ .Email }}</li>
+			<li>Karma: {{ .Karma }}</li>
+		</ul>
+	{{ template "footer" }}
+{{ end }}

@@ -2,7 +2,9 @@ package routes
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -10,23 +12,19 @@ import (
 	"github.com/maksadbek/dumbwall/internal/users"
 )
 
-func (r *Routes) CreateUser(w http.ResponseWriter, req *http.Request) {
-	err := req.ParseForm()
-	if err != nil {
-		println(err.Error())
-		return
-	}
+var errInvalidCaptchaResponse = errors.New("invalid captcha response")
 
+func (r *Routes) validateCaptcha(recaptchaResponse, remoteAddr string) error {
 	var recaptchaValues = make(url.Values)
 
 	recaptchaValues.Set("secret", r.recaptchaSecret)
-	recaptchaValues.Set("response", req.Form.Get("g-recaptcha-response"))
-	recaptchaValues.Set("remoteip", req.RemoteAddr)
+	recaptchaValues.Set("response", recaptchaResponse)
+	recaptchaValues.Set("remoteip", remoteAddr)
 
 	resp, err := http.PostForm("https://www.google.com/recaptcha/api/siteverify", recaptchaValues)
 	if err != nil {
 		println(err.Error())
-		return
+		return err
 	}
 
 	defer resp.Body.Close()
@@ -39,10 +37,25 @@ func (r *Routes) CreateUser(w http.ResponseWriter, req *http.Request) {
 	err = dec.Decode(&captchaResponse)
 	if err != nil {
 		println(err.Error())
-		return
+		return err
 	}
 
 	if !captchaResponse.Success {
+		return errInvalidCaptchaResponse
+	}
+
+	return nil
+}
+
+func (r *Routes) CreateUser(w http.ResponseWriter, req *http.Request) {
+	err := req.ParseForm()
+	if err != nil {
+		println(err.Error())
+		return
+	}
+
+	err = r.validateCaptcha(req.Form.Get("g-recaptcha-response"), req.RemoteAddr)
+	if err != nil {
 		http.Redirect(w, req, "/signup", http.StatusForbidden)
 		return
 	}
@@ -98,5 +111,22 @@ func (r *Routes) Profile(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Routes) User(w http.ResponseWriter, req *http.Request) {
+	id, err := valid.ToInt(req.URL.Query().Get(":id"))
+	if err != nil {
+		println(err.Error())
+		http.Redirect(w, req, "/404", http.StatusNotFound)
+		return
+	}
 
+	user, err := r.db.GetUser(uint64(id))
+	if err != nil {
+		println(err.Error())
+		io.WriteString(w, "not found")
+		return
+	}
+
+	err = r.templates.ExecuteTemplate(w, "profile", user)
+	if err != nil {
+		println(err.Error())
+	}
 }
