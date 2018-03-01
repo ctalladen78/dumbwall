@@ -7,9 +7,9 @@ func (r *Routes) NewPost(w http.ResponseWriter, req *http.Request) {
 		flash flash
 	}{
 		flash: flash{
-			notice: "you're creating a post",
-			alert:  "be careful!",
-			custom: map[string]string{
+			Notice: "you're creating a post",
+			Alert:  "be careful!",
+			Custom: map[string]string{
 				"first_ever_post": "hey, post anything what you want",
 			},
 		},

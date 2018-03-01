@@ -1,6 +1,14 @@
 {{ define "signup" }}
 {{ template "header" }}
 
+{{ if .Errors }}
+	<ul>
+	{{ range $key, $value := .Errors }}
+		<li>{{ $value }}</li>
+	{{ end }}
+	</ul>
+{{ end }}
+
 <form method=post action="/users/create">
 	<label for="login">login</label>
 	<input required type="text" name="login">
@@ -13,6 +21,8 @@
 
 	<label for="password2">repeat password</label>
 	<input required type="password" name="password2">
+
+	<div class="g-recaptcha" data-sitekey="6Le3skkUAAAAAD8s8IH58Wu6yRLSt19ySvuMcpv7"></div>
 
 	<button type="submit">Create a post</button>
 </form>

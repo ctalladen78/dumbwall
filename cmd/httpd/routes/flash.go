@@ -1,8 +1,10 @@
 package routes
 
 type flash struct {
-	notice string
-	alert  string
+	Notice string
+	Alert  string
 
-	custom map[string]string
+	Errors []string
+
+	Custom map[string]string
 }

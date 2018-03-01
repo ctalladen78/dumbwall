@@ -9,8 +9,9 @@ import (
 )
 
 type Routes struct {
-	db   *database.Database
-	auth *auth.Auth
+	db              *database.Database
+	auth            *auth.Auth
+	recaptchaSecret string
 
 	templates *template.Template
 }
@@ -38,7 +39,8 @@ func New(etcPath string) (*Routes, error) {
 	}
 
 	return &Routes{
-		templates: templates,
-		auth:      authorizer,
+		templates:       templates,
+		auth:            authorizer,
+		recaptchaSecret: "6Le3skkUAAAAAERiyo56lZIgtHOViEw9vyf9ukyi",
 	}, nil
 }
