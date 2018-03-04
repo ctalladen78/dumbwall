@@ -56,6 +56,7 @@ func (h *httpd) init(etcPath string) error {
 	m.Get("/signin", http.HandlerFunc(r.SignIn))
 
 	m.Post("/users/create", http.HandlerFunc(r.CreateUser))
+	m.Post("/users/authenticate", http.HandlerFunc(r.Authenticate))
 	m.Get("/users/:id", http.HandlerFunc(r.User))
 
 	m.Get("/", http.HandlerFunc(r.Best))

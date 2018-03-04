@@ -4,12 +4,20 @@ import (
 	"github.com/lib/pq"
 	"github.com/maksadbek/dumbwall/internal/users"
 	sq "github.com/masterminds/squirrel"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (d *Database) CreateUser(u users.User) (users.User, error) {
 	var id uint64
 
-	err := psql.Insert("users").
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return u, err
+	}
+
+	u.Password = string(hashedPassword)
+
+	err = psql.Insert("users").
 		Columns("login", "email", "password").
 		Values(u.Login, u.Email, u.Password).
 		Suffix("returning id").
@@ -100,4 +108,30 @@ func (d *Database) CheckLogin(login string) error {
 
 func (d *Database) CheckEmail(email string) error {
 	return nil
+}
+
+func (d *Database) Authenticate(login, passwd string) (int64, error) {
+	var (
+		hashedPasswd string
+		id           int64
+	)
+
+	println(login, passwd)
+	err := psql.Select("id", "password").
+		From("users").
+		Where(sq.Eq{"login": login}).
+		RunWith(d.p.DB).
+		QueryRow().
+		Scan(&id, &hashedPasswd)
+
+	if err != nil {
+		return id, err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPasswd), []byte(passwd))
+	if err != nil {
+		return id, err
+	}
+
+	return id, nil
 }

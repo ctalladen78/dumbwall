@@ -168,7 +168,7 @@ func (r *Routes) User(w http.ResponseWriter, req *http.Request) {
 	id, err := valid.ToInt(req.URL.Query().Get(":id"))
 	if err != nil {
 		println(err.Error())
-		http.Redirect(w, req, "/404", http.StatusNotFound)
+		http.Redirect(w, req, "/404", http.StatusSeeOther)
 		return
 	}
 
@@ -183,4 +183,39 @@ func (r *Routes) User(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		println(err.Error())
 	}
+}
+
+func (r *Routes) Authenticate(w http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
+
+	login := req.PostForm.Get("login")
+	password := req.PostForm.Get("password")
+
+	id, err := r.db.Authenticate(login, password)
+	if err != nil {
+		r.logger.Error("password do not match", zap.Error(err))
+		http.Redirect(w, req, "/signin", http.StatusSeeOther)
+		return
+	}
+
+	println("welcome")
+	token, err := r.auth.CreateJWTToken(map[string]string{
+		"user_id": strconv.FormatInt(id, 10),
+	})
+	if err != nil {
+		println(err.Error())
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "user_session",
+		Value:   token,
+		Domain:  "localhost",
+		Path:    "/",
+		Expires: time.Now().Add(time.Duration(90) * time.Hour),
+	})
+
+	println("redirect")
+	http.Redirect(w, req, "/me", http.StatusFound)
+	return
 }

@@ -1,0 +1,15 @@
+{{ define "signin" }}
+{{ template "header" }}
+
+<form method=post action="/users/authenticate">
+	<label for="login">login</label>
+	<input required type="text" name="login">
+
+	<label for="password">password</label>
+	<input required type="password" name="password">
+
+	<button type="submit">Sign in</button>
+</form>
+
+{{ template "footer" }}
+{{ end }}
