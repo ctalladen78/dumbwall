@@ -3,13 +3,15 @@ package routes
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
+	"time"
 
 	valid "github.com/asaskevich/govalidator"
 	"github.com/maksadbek/dumbwall/internal/users"
+	"go.uber.org/zap"
 )
 
 var errInvalidCaptchaResponse = errors.New("invalid captcha response")
@@ -39,7 +41,7 @@ func (r *Routes) validateCaptcha(recaptchaResponse, remoteAddr string) error {
 		println(err.Error())
 		return err
 	}
-
+	println("captcha success", captchaResponse.Success)
 	if !captchaResponse.Success {
 		return errInvalidCaptchaResponse
 	}
@@ -48,17 +50,21 @@ func (r *Routes) validateCaptcha(recaptchaResponse, remoteAddr string) error {
 }
 
 func (r *Routes) CreateUser(w http.ResponseWriter, req *http.Request) {
+	println("create user")
 	err := req.ParseForm()
 	if err != nil {
 		println(err.Error())
 		return
 	}
 
-	err = r.validateCaptcha(req.Form.Get("g-recaptcha-response"), req.RemoteAddr)
-	if err != nil {
-		http.Redirect(w, req, "/signup", http.StatusForbidden)
-		return
-	}
+	/*
+		err = r.validateCaptcha(req.Form.Get("g-recaptcha-response"), req.RemoteAddr)
+		if err != nil {
+			r.logger.Error("failed to validate captcha", zap.Error(err))
+			http.Redirect(w, req, "/signup", http.StatusInternalServerError)
+			return
+		}
+	*/
 
 	f := flash{}
 
@@ -93,7 +99,24 @@ func (r *Routes) CreateUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Println(user)
+	token, err := r.auth.CreateJWTToken(map[string]string{
+		"user_id": strconv.FormatUint(user.ID, 10),
+	})
+	if err != nil {
+		println(err.Error())
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "user_session",
+		Value:   token,
+		Domain:  "localhost",
+		Path:    "/",
+		Expires: time.Now().Add(time.Duration(90) * time.Hour),
+	})
+
+	println("redirect")
+	http.Redirect(w, req, "/me", http.StatusFound)
 
 	return
 }
@@ -107,7 +130,38 @@ func (r *Routes) EditProfile(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Routes) Profile(w http.ResponseWriter, req *http.Request) {
+	cookie, err := req.Cookie("user_session")
+	if err != nil {
+		r.logger.Error("failed to get token", zap.Error(err))
+		http.Redirect(w, req, "/", http.StatusOK)
+		return
+	}
 
+	println("cookie", cookie.Value)
+	claims, err := r.auth.Validate(cookie.Value)
+	if err != nil {
+		r.logger.Error("failed to validate token", zap.Error(err))
+		http.Redirect(w, req, "/", http.StatusOK)
+		return
+	}
+
+	id, err := strconv.ParseInt(claims["user_id"].(string), 10, 64)
+	if err != nil {
+		r.logger.Error("blet", zap.Error(err))
+		return
+	}
+
+	user, err := r.db.GetUser(uint64(id))
+	if err != nil {
+		r.logger.Error("blet", zap.Error(err))
+		return
+	}
+
+	err = r.templates.ExecuteTemplate(w, "profile", user)
+	if err != nil {
+		r.logger.Error("blet", zap.Error(err))
+		return
+	}
 }
 
 func (r *Routes) User(w http.ResponseWriter, req *http.Request) {

@@ -6,14 +6,15 @@ import (
 	"github.com/maksadbek/dumbwall/internal/auth"
 	"github.com/maksadbek/dumbwall/internal/config"
 	"github.com/maksadbek/dumbwall/internal/database"
+	"go.uber.org/zap"
 )
 
 type Routes struct {
 	db              *database.Database
 	auth            *auth.Auth
 	recaptchaSecret string
-
-	templates *template.Template
+	templates       *template.Template
+	logger          *zap.Logger
 }
 
 func New(c config.Routes, db *database.Database) (*Routes, error) {
@@ -27,10 +28,16 @@ func New(c config.Routes, db *database.Database) (*Routes, error) {
 		return nil, err
 	}
 
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Routes{
 		db:              db,
 		templates:       templates,
 		auth:            authorizer,
 		recaptchaSecret: c.RecaptchaSecret,
+		logger:          logger,
 	}, nil
 }
