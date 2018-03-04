@@ -1,6 +1,11 @@
 package routes
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/maksadbek/dumbwall/internal/posts"
+)
 
 func (r *Routes) Hot(w http.ResponseWriter, req *http.Request) {
 
@@ -23,5 +28,19 @@ func (r *Routes) Top(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Routes) Newest(w http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
 
+	newestPosts, errs := r.db.Newest(0, 20)
+	if len(errs) > 0 {
+		panic(errs)
+	}
+
+	fmt.Println(newestPosts)
+	ctx := struct {
+		Posts []posts.Post
+	}{
+		Posts: newestPosts,
+	}
+
+	r.templates.ExecuteTemplate(w, "list", ctx)
 }

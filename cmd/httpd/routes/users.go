@@ -129,6 +129,30 @@ func (r *Routes) EditProfile(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func (r *Routes) validateToken(req *http.Request) (int64, error) {
+	var id int64
+
+	cookie, err := req.Cookie("user_session")
+	if err != nil {
+		r.logger.Error("failed to get token", zap.Error(err))
+		return id, err
+	}
+
+	claims, err := r.auth.Validate(cookie.Value)
+	if err != nil {
+		r.logger.Error("failed to validate token", zap.Error(err))
+		return id, err
+	}
+
+	id, err = strconv.ParseInt(claims["user_id"].(string), 10, 64)
+	if err != nil {
+		r.logger.Error("blet", zap.Error(err))
+		return id, err
+	}
+
+	return id, err
+}
+
 func (r *Routes) Profile(w http.ResponseWriter, req *http.Request) {
 	cookie, err := req.Cookie("user_session")
 	if err != nil {
@@ -198,7 +222,6 @@ func (r *Routes) Authenticate(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	println("welcome")
 	token, err := r.auth.CreateJWTToken(map[string]string{
 		"user_id": strconv.FormatInt(id, 10),
 	})
@@ -215,7 +238,6 @@ func (r *Routes) Authenticate(w http.ResponseWriter, req *http.Request) {
 		Expires: time.Now().Add(time.Duration(90) * time.Hour),
 	})
 
-	println("redirect")
 	http.Redirect(w, req, "/me", http.StatusFound)
 	return
 }

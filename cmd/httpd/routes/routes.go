@@ -23,7 +23,7 @@ func New(c config.Routes, db *database.Database) (*Routes, error) {
 		return nil, err
 	}
 
-	authorizer, err := auth.New(c.Certs, "dumbwall.xyz", 3600)
+	authorizer, err := auth.New(c.Certs, "dumbwall.xyz", 99999)
 	if err != nil {
 		return nil, err
 	}

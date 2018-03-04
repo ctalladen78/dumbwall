@@ -1,26 +1,35 @@
 package database
 
 import (
+	"strconv"
+
+	"github.com/lib/pq"
 	"github.com/maksadbek/dumbwall/internal/posts"
 	sq "github.com/masterminds/squirrel"
 )
 
 func (d *Database) CreatePost(userID int64, post posts.Post) (posts.Post, error) {
-	var id uint64
-
+	var (
+		id                   uint64
+		createdAt, updatedAt pq.NullTime
+	)
 	err := psql.Insert("posts").
 		Columns("type", "title", "body", "user_id").
 		Values(post.Type, post.Title, post.Body, userID).
+		Suffix("returning id,created_at,updated_at").
 		RunWith(d.p.DB).
 		QueryRow().
-		Scan(&id)
+		Scan(&id, &createdAt, &updatedAt)
 
 	if err != nil {
 		return post, err
 	}
 
 	post.ID = id
+	post.CreatedAt = createdAt.Time
+	post.UpdatedAt = updatedAt.Time
 
+	d.r.PutNew(strconv.FormatUint(post.ID, 10), post.CreatedAt.Unix())
 	return post, nil
 }
 
@@ -86,13 +95,34 @@ func (d *Database) Delete(id uint64) error {
 	return err
 }
 
-func (d *Database) GetPosts(ids []uint64) ([]posts.Post, []error) {
+func (d *Database) Newest(begin, end int) ([]posts.Post, []error) {
+	ids, err := d.r.New(uint64(begin), uint64(end))
+	if err != nil {
+		panic(err)
+	}
+
+	posts, errs := d.GetPosts(ids)
+	return posts, errs
+}
+
+func (d *Database) GetPosts(ids []string) ([]posts.Post, []error) {
 	var (
 		list = []posts.Post{}
 		errs = []error{}
+
+		createdAt, updatedAt pq.NullTime
 	)
 
-	rows, err := psql.Select("type", "title", "body", "ups", "downs").
+	rows, err := psql.
+		Select(
+			"type",
+			"title",
+			"body",
+			"ups",
+			"downs",
+			"created_at",
+			"updated_at",
+		).
 		From("posts").
 		Where(sq.Eq{"id": ids}).
 		RunWith(d.p.DB).Query()
@@ -103,11 +133,22 @@ func (d *Database) GetPosts(ids []uint64) ([]posts.Post, []error) {
 
 	for rows.Next() {
 		var p posts.Post
-		err := rows.Scan(&p.Type, &p.Title, &p.Body, &p.Ups, &p.Downs)
+		err := rows.Scan(
+			&p.Type,
+			&p.Title,
+			&p.Body,
+			&p.Ups,
+			&p.Downs,
+			&createdAt,
+			&updatedAt)
+
 		if err != nil {
 			errs = append(errs, err)
 			continue
 		}
+
+		p.CreatedAt = createdAt.Time
+		p.UpdatedAt = updatedAt.Time
 
 		p.Ups -= p.Downs
 

@@ -1,0 +1,14 @@
+{{ define "list" }}
+	{{ template "header" }}
+
+	{{ range $key, $value := .Posts }}
+		<ul>
+			<li>{{ $value.Title }}</li>
+			<li>{{ $value.Body }}</li>
+			<li>{{ $value.Ups }}</li>
+			<li>{{ $value.CreatedAt }}</li>
+		</ul>
+	{{ end }}
+
+	{{ template "footer" }}
+{{ end }}

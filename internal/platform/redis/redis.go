@@ -22,7 +22,7 @@ func New(addr string, maxIdle, maxActive, idleTimeout int) *Redis {
 }
 
 func (r *Redis) Hot(b, e uint64) ([]string, error) {
-	return redigo.Strings(r.zrevrange("hot", b, e))
+	return r.zrevrange("hot", b, e)
 }
 
 func (r *Redis) PutHot(id string, score uint64) error {
@@ -30,7 +30,7 @@ func (r *Redis) PutHot(id string, score uint64) error {
 }
 
 func (r *Redis) Best(b, e uint64) ([]string, error) {
-	return redigo.Strings(r.zrevrange("best", b, e))
+	return r.zrevrange("best", b, e)
 }
 
 func (r *Redis) PutBest(id string, score uint64) error {
@@ -38,7 +38,7 @@ func (r *Redis) PutBest(id string, score uint64) error {
 }
 
 func (r *Redis) Top(b, e uint64) ([]string, error) {
-	return redigo.Strings(r.zrevrange("top", b, e))
+	return r.zrevrange("top", b, e)
 }
 
 func (r *Redis) PutTop(id string, score uint64) error {
@@ -46,7 +46,7 @@ func (r *Redis) PutTop(id string, score uint64) error {
 }
 
 func (r *Redis) Controversial(b, e uint64) ([]string, error) {
-	return redigo.Strings(r.zrevrange("controversial", b, e))
+	return r.zrevrange("controversial", b, e)
 }
 
 func (r *Redis) PutControversial(id string, score uint64) error {
@@ -54,7 +54,7 @@ func (r *Redis) PutControversial(id string, score uint64) error {
 }
 
 func (r *Redis) New(b, e uint64) ([]string, error) {
-	return redigo.Strings(r.zrevrange("new", b, e))
+	return r.zrevrange("new", b, e)
 }
 
 func (r *Redis) PutNew(id string, createdAt int64) error {
@@ -62,14 +62,14 @@ func (r *Redis) PutNew(id string, createdAt int64) error {
 }
 
 func (r *Redis) Rising(b, e uint64) ([]string, error) {
-	return redigo.Strings(r.zrevrange("rising", b, e))
+	return r.zrevrange("rising", b, e)
 }
 
 func (r *Redis) PutRising(id string, score uint64) error {
 	return r.zadd("rising", id, score)
 }
 
-func (r *Redis) zrevrange(key string, b, e uint64) (reply interface{}, err error) {
+func (r *Redis) zrevrange(key string, b, e uint64) (reply []string, err error) {
 	c := r.pool.Get()
 	defer c.Close()
 
