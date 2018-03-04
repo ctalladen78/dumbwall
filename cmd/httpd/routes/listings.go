@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/maksadbek/dumbwall/internal/posts"
@@ -35,7 +34,6 @@ func (r *Routes) Newest(w http.ResponseWriter, req *http.Request) {
 		panic(errs)
 	}
 
-	fmt.Println(newestPosts)
 	ctx := struct {
 		Posts []posts.Post
 	}{

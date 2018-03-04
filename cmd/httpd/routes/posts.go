@@ -3,6 +3,7 @@ package routes
 import (
 	"net/http"
 
+	valid "github.com/asaskevich/govalidator"
 	"github.com/maksadbek/dumbwall/internal/posts"
 	"go.uber.org/zap"
 )
@@ -57,11 +58,51 @@ func (r *Routes) DeletePost(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Routes) UpPost(w http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
 
+	_, err := r.validateToken(req)
+	if err != nil {
+		panic(err)
+		return
+	}
+
+	id, err := valid.ToInt(req.URL.Query().Get(":id"))
+	if err != nil {
+		panic(err)
+		return
+	}
+
+	err = r.db.UpPost(id)
+	if err != nil {
+		panic(err)
+		return
+	}
+
+	http.Redirect(w, req, req.Referer(), http.StatusFound)
 }
 
 func (r *Routes) DownPost(w http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
 
+	_, err := r.validateToken(req)
+	if err != nil {
+		panic(err)
+		return
+	}
+
+	id, err := valid.ToInt(req.URL.Query().Get(":id"))
+	if err != nil {
+		panic(err)
+		return
+	}
+
+	err = r.db.DownPost(id)
+	if err != nil {
+		panic(err)
+		return
+	}
+
+	http.Redirect(w, req, req.Referer(), http.StatusFound)
 }
 
 func (r *Routes) Post(w http.ResponseWriter, req *http.Request) {

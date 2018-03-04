@@ -1,6 +1,7 @@
 package database
 
 import (
+	"sort"
 	"strconv"
 
 	"github.com/lib/pq"
@@ -65,9 +66,9 @@ func (d *Database) UpdatePost(id string, p posts.Post) (posts.Post, error) {
 	return p, err
 }
 
-func (d *Database) UpPost(id uint64) error {
+func (d *Database) UpPost(id int64) error {
 	_, err := psql.Update("posts").
-		Set("ups", "ups + 1").
+		Set("ups", sq.Expr("ups+1")).
 		Where(sq.Eq{"id": id}).
 		RunWith(d.p.DB).
 		Exec()
@@ -75,9 +76,9 @@ func (d *Database) UpPost(id uint64) error {
 	return err
 }
 
-func (d *Database) DownPost(id uint64) error {
+func (d *Database) DownPost(id int64) error {
 	_, err := psql.Update("posts").
-		Set("downs", "down+1").
+		Set("downs", sq.Expr("downs+1")).
 		Where(sq.Eq{"id": id}).
 		RunWith(d.p.DB).
 		Exec()
@@ -102,6 +103,14 @@ func (d *Database) Newest(begin, end int) ([]posts.Post, []error) {
 	}
 
 	posts, errs := d.GetPosts(ids)
+	if len(errs) > 0 {
+		return posts, errs
+	}
+
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].CreatedAt.Unix() > posts[j].CreatedAt.Unix()
+	})
+
 	return posts, errs
 }
 
@@ -115,6 +124,7 @@ func (d *Database) GetPosts(ids []string) ([]posts.Post, []error) {
 
 	rows, err := psql.
 		Select(
+			"id",
 			"type",
 			"title",
 			"body",
@@ -134,6 +144,7 @@ func (d *Database) GetPosts(ids []string) ([]posts.Post, []error) {
 	for rows.Next() {
 		var p posts.Post
 		err := rows.Scan(
+			&p.ID,
 			&p.Type,
 			&p.Title,
 			&p.Body,
