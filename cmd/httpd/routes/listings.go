@@ -23,6 +23,20 @@ func (r *Routes) Best(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Routes) Top(w http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
+
+	topPosts, errs := r.db.Top(0, 20)
+	if len(errs) > 0 {
+		panic(errs)
+	}
+
+	ctx := struct {
+		Posts []posts.Post
+	}{
+		Posts: topPosts,
+	}
+
+	r.templates.ExecuteTemplate(w, "list", ctx)
 
 }
 

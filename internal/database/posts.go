@@ -2,7 +2,6 @@ package database
 
 import (
 	"sort"
-	"strconv"
 
 	"github.com/lib/pq"
 	"github.com/maksadbek/dumbwall/internal/posts"
@@ -11,7 +10,7 @@ import (
 
 func (d *Database) CreatePost(userID int64, post posts.Post) (posts.Post, error) {
 	var (
-		id                   uint64
+		id                   int
 		createdAt, updatedAt pq.NullTime
 	)
 	err := psql.Insert("posts").
@@ -30,7 +29,7 @@ func (d *Database) CreatePost(userID int64, post posts.Post) (posts.Post, error)
 	post.CreatedAt = createdAt.Time
 	post.UpdatedAt = updatedAt.Time
 
-	d.r.PutNew(strconv.FormatUint(post.ID, 10), post.CreatedAt.Unix())
+	d.r.PutNew(post.ID, post.CreatedAt.Unix())
 	return post, nil
 }
 
@@ -66,24 +65,42 @@ func (d *Database) UpdatePost(id string, p posts.Post) (posts.Post, error) {
 	return p, err
 }
 
-func (d *Database) UpPost(id int64) error {
-	_, err := psql.Update("posts").
+func (d *Database) UpPost(id int) error {
+	var score int64
+
+	err := psql.Update("posts").
 		Set("ups", sq.Expr("ups+1")).
 		Where(sq.Eq{"id": id}).
+		Suffix("returning ups-downs").
 		RunWith(d.p.DB).
-		Exec()
+		QueryRow().
+		Scan(&score)
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	println("up", id, score)
+	return d.r.PutTop(id, score)
 }
 
-func (d *Database) DownPost(id int64) error {
-	_, err := psql.Update("posts").
+func (d *Database) DownPost(id int) error {
+	var score int64
+
+	err := psql.Update("posts").
 		Set("downs", sq.Expr("downs+1")).
 		Where(sq.Eq{"id": id}).
+		Suffix("returning ups - downs").
 		RunWith(d.p.DB).
-		Exec()
+		QueryRow().
+		Scan(&score)
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	println("down", id, score)
+	return d.r.PutTop(id, score)
 }
 
 func (d *Database) Delete(id uint64) error {
@@ -97,9 +114,9 @@ func (d *Database) Delete(id uint64) error {
 }
 
 func (d *Database) Newest(begin, end int) ([]posts.Post, []error) {
-	ids, err := d.r.New(uint64(begin), uint64(end))
+	ids, err := d.r.Newest(begin, end)
 	if err != nil {
-		panic(err)
+		return nil, []error{err}
 	}
 
 	posts, errs := d.GetPosts(ids)
@@ -109,6 +126,24 @@ func (d *Database) Newest(begin, end int) ([]posts.Post, []error) {
 
 	sort.Slice(posts, func(i, j int) bool {
 		return posts[i].CreatedAt.Unix() > posts[j].CreatedAt.Unix()
+	})
+
+	return posts, errs
+}
+
+func (d *Database) Top(begin, end int) ([]posts.Post, []error) {
+	ids, err := d.r.Top(begin, end)
+	if err != nil {
+		return nil, []error{err}
+	}
+
+	posts, errs := d.GetPosts(ids)
+	if len(errs) > 0 {
+		return posts, errs
+	}
+
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].Ups > posts[j].Ups
 	})
 
 	return posts, errs

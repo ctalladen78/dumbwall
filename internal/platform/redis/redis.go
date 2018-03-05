@@ -21,62 +21,62 @@ func New(addr string, maxIdle, maxActive, idleTimeout int) *Redis {
 	}
 }
 
-func (r *Redis) Hot(b, e uint64) ([]string, error) {
+func (r *Redis) Hot(b, e int) ([]string, error) {
 	return r.zrevrange("hot", b, e)
 }
 
-func (r *Redis) PutHot(id string, score uint64) error {
+func (r *Redis) PutHot(id int, score int64) error {
 	return r.zadd("hot", id, score)
 }
 
-func (r *Redis) Best(b, e uint64) ([]string, error) {
+func (r *Redis) Best(b, e int) ([]string, error) {
 	return r.zrevrange("best", b, e)
 }
 
-func (r *Redis) PutBest(id string, score uint64) error {
+func (r *Redis) PutBest(id int, score int64) error {
 	return r.zadd("best", id, score)
 }
 
-func (r *Redis) Top(b, e uint64) ([]string, error) {
-	return r.zrevrange("top", b, e)
+func (r *Redis) Top(b, e int) ([]string, error) {
+	return r.zrevrange("top", int(b), int(e))
 }
 
-func (r *Redis) PutTop(id string, score uint64) error {
-	return r.zadd("put", id, score)
+func (r *Redis) PutTop(id int, score int64) error {
+	return r.zadd("top", id, score)
 }
 
-func (r *Redis) Controversial(b, e uint64) ([]string, error) {
+func (r *Redis) Controversial(b, e int) ([]string, error) {
 	return r.zrevrange("controversial", b, e)
 }
 
-func (r *Redis) PutControversial(id string, score uint64) error {
+func (r *Redis) PutControversial(id int, score int64) error {
 	return r.zadd("controversial", id, score)
 }
 
-func (r *Redis) New(b, e uint64) ([]string, error) {
+func (r *Redis) Newest(b, e int) ([]string, error) {
 	return r.zrevrange("new", b, e)
 }
 
-func (r *Redis) PutNew(id string, createdAt int64) error {
-	return r.zadd("new", id, uint64(createdAt))
+func (r *Redis) PutNew(id int, createdAt int64) error {
+	return r.zadd("new", id, createdAt)
 }
 
-func (r *Redis) Rising(b, e uint64) ([]string, error) {
+func (r *Redis) Rising(b, e int) ([]string, error) {
 	return r.zrevrange("rising", b, e)
 }
 
-func (r *Redis) PutRising(id string, score uint64) error {
+func (r *Redis) PutRising(id int, score int64) error {
 	return r.zadd("rising", id, score)
 }
 
-func (r *Redis) zrevrange(key string, b, e uint64) (reply []string, err error) {
+func (r *Redis) zrevrange(key string, b, e int) (reply []string, err error) {
 	c := r.pool.Get()
 	defer c.Close()
 
 	return redigo.Strings(c.Do("ZREVRANGE", key, b, e))
 }
 
-func (r *Redis) zadd(key string, member string, score uint64) error {
+func (r *Redis) zadd(key string, member int, score int64) error {
 	c := r.pool.Get()
 	defer c.Close()
 

@@ -2,8 +2,8 @@ package routes
 
 import (
 	"net/http"
+	"strconv"
 
-	valid "github.com/asaskevich/govalidator"
 	"github.com/maksadbek/dumbwall/internal/posts"
 	"go.uber.org/zap"
 )
@@ -62,20 +62,17 @@ func (r *Routes) UpPost(w http.ResponseWriter, req *http.Request) {
 
 	_, err := r.validateToken(req)
 	if err != nil {
-		panic(err)
 		return
 	}
 
-	id, err := valid.ToInt(req.URL.Query().Get(":id"))
+	id, err := strconv.Atoi(req.URL.Query().Get(":id"))
 	if err != nil {
-		panic(err)
 		return
 	}
 
 	err = r.db.UpPost(id)
 	if err != nil {
 		panic(err)
-		return
 	}
 
 	http.Redirect(w, req, req.Referer(), http.StatusFound)
@@ -90,7 +87,7 @@ func (r *Routes) DownPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	id, err := valid.ToInt(req.URL.Query().Get(":id"))
+	id, err := strconv.Atoi(req.URL.Query().Get(":id"))
 	if err != nil {
 		panic(err)
 		return

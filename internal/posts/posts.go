@@ -11,7 +11,7 @@ const (
 )
 
 type Post struct {
-	ID uint64
+	ID int
 
 	Type PostType
 
