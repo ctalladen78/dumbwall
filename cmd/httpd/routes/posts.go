@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/maksadbek/dumbwall/internal/actions"
 	"github.com/maksadbek/dumbwall/internal/posts"
 	"go.uber.org/zap"
 )
@@ -60,19 +61,22 @@ func (r *Routes) DeletePost(w http.ResponseWriter, req *http.Request) {
 func (r *Routes) UpPost(w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 
-	_, err := r.validateToken(req)
+	userID, err := r.validateToken(req)
 	if err != nil {
+		http.Redirect(w, req, req.Referer(), http.StatusFound)
 		return
 	}
 
-	id, err := strconv.Atoi(req.URL.Query().Get(":id"))
+	postID, err := strconv.Atoi(req.URL.Query().Get(":id"))
 	if err != nil {
+		http.Redirect(w, req, req.Referer(), http.StatusFound)
 		return
 	}
 
-	err = r.db.UpPost(id)
+	err = r.db.VotePost(userID, postID, actions.ActionUp)
 	if err != nil {
-		panic(err)
+		http.Redirect(w, req, req.Referer(), http.StatusFound)
+		return
 	}
 
 	http.Redirect(w, req, req.Referer(), http.StatusFound)
@@ -81,21 +85,21 @@ func (r *Routes) UpPost(w http.ResponseWriter, req *http.Request) {
 func (r *Routes) DownPost(w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 
-	_, err := r.validateToken(req)
+	userID, err := r.validateToken(req)
 	if err != nil {
-		panic(err)
+		http.Redirect(w, req, req.Referer(), http.StatusFound)
 		return
 	}
 
-	id, err := strconv.Atoi(req.URL.Query().Get(":id"))
+	postID, err := strconv.Atoi(req.URL.Query().Get(":id"))
 	if err != nil {
-		panic(err)
+		http.Redirect(w, req, req.Referer(), http.StatusFound)
 		return
 	}
 
-	err = r.db.DownPost(id)
+	err = r.db.VotePost(userID, postID, actions.ActionDown)
 	if err != nil {
-		panic(err)
+		http.Redirect(w, req, req.Referer(), http.StatusFound)
 		return
 	}
 

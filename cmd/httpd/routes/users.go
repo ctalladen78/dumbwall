@@ -129,8 +129,8 @@ func (r *Routes) EditProfile(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (r *Routes) validateToken(req *http.Request) (int64, error) {
-	var id int64
+func (r *Routes) validateToken(req *http.Request) (int, error) {
+	var id int
 
 	cookie, err := req.Cookie("user_session")
 	if err != nil {
@@ -144,7 +144,7 @@ func (r *Routes) validateToken(req *http.Request) (int64, error) {
 		return id, err
 	}
 
-	id, err = strconv.ParseInt(claims["user_id"].(string), 10, 64)
+	id, err = strconv.Atoi(claims["user_id"].(string))
 	if err != nil {
 		r.logger.Error("blet", zap.Error(err))
 		return id, err

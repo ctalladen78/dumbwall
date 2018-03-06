@@ -14,3 +14,5 @@
 .glide/
 *.swp
 httpd
+.idea
+etc/certs
