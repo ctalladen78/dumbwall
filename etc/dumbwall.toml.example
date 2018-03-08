@@ -5,13 +5,14 @@
 		"../../etc/templates/index.tmpl",
 		"../../etc/templates/list.tmpl",
 		"../../etc/templates/signup.tmpl",
+		"../../etc/templates/signin.tmpl",
 		"../../etc/templates/posts/new.tmpl",
 		"../../etc/templates/posts/view.tmpl",
 		"../../etc/templates/users/new.tmpl",
 		"../../etc/templates/users/profile.tmpl",
 	]
 	certs = "../../etc/certs"
-	recaptcha_secret = "secret"
+	recaptcha_secret = "recaptcha_secret"
 
 [database]
 	[database.postgres]
