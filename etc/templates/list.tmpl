@@ -1,21 +1,25 @@
 {{ define "list" }}
 	{{ template "header" }}
 
-	{{ range $key, $value := .Posts }}
-		<div id={{.ID}}>
-			<strong>{{ .Title }}</strong>
-			<p>{{ .Body }}</p>
-			<p>rating: {{ .Ups }}</p>
-			<p>{{ .CreatedAt }}</p>
+        {{ range $key, $value := .Posts }}
+            <div id={{.ID}}>
+                <strong>{{ .Title }}</strong>
+                <p>{{ .Body }}</p>
+                <p>rating: {{ .Ups }}</p>
+                <p>{{ .CreatedAt }}</p>
+                <p>Created By: <a href="/users/{{.UserID}}">{{ .Meta.OwnerLogin }}</a></p>
 
-			<form method=post action="/posts/{{.ID}}/up">
-				<button type="submit">up</button>
-			</form>
-			<form method=post action="/posts/{{.ID}}/down">
-				<button type="submit">down</button>
-			</form>
-		</div>
-	{{ end }}
+                <form method=post action="/posts/{{.ID}}/up">
+                    <button type="submit">up</button>
+                </form>
+                <form method=post action="/posts/{{.ID}}/down">
+                    <button type="submit">down</button>
+                </form>
+                </br>
+            </div>
+        {{ end }}
+	    </div>
+	</div>
 
 	{{ template "footer" }}
 {{ end }}

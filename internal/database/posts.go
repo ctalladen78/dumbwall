@@ -37,11 +37,28 @@ func (d *Database) CreatePost(userID int, post posts.Post) (posts.Post, error) {
 func (d *Database) GetPost(id string) (posts.Post, error) {
 	var p posts.Post
 
-	err := psql.Select("type", "title", "body", "ups", "downs").
+	err := psql.
+		Select(
+			"posts.type",
+			"posts.title",
+			"posts.body",
+			"posts.ups",
+			"posts.downs",
+			"posts.user_id",
+			"users.login").
 		From("posts").
+		Join("users on posts.user_id = users.id").
 		RunWith(d.p.DB).
 		QueryRow().
-		Scan(&p.Type, &p.Title, &p.Body, &p.Ups, &p.Downs, &p.CreatedAt)
+		Scan(
+			&p.Type,
+			&p.Title,
+			&p.Body,
+			&p.Ups,
+			&p.Downs,
+			&p.CreatedAt,
+			&p.Meta.OwnerLogin,
+		)
 
 	if err != nil {
 		return p, err
@@ -252,17 +269,20 @@ func (d *Database) GetPosts(ids []string) ([]posts.Post, []error) {
 
 	rows, err := psql.
 		Select(
-			"id",
-			"type",
-			"title",
-			"body",
-			"ups",
-			"downs",
-			"created_at",
-			"updated_at",
+			"posts.id",
+			"posts.type",
+			"posts.title",
+			"posts.body",
+			"posts.ups",
+			"posts.downs",
+			"posts.user_id",
+			"posts.created_at",
+			"posts.updated_at",
+			"users.login",
 		).
 		From("posts").
-		Where(sq.Eq{"id": ids}).
+		Join("users on users.id = posts.user_id").
+		Where(sq.Eq{"posts.id": ids}).
 		RunWith(d.p.DB).Query()
 
 	if err != nil {
@@ -278,8 +298,10 @@ func (d *Database) GetPosts(ids []string) ([]posts.Post, []error) {
 			&p.Body,
 			&p.Ups,
 			&p.Downs,
+			&p.UserID,
 			&createdAt,
-			&updatedAt)
+			&updatedAt,
+			&p.Meta.OwnerLogin)
 
 		if err != nil {
 			errs = append(errs, err)
