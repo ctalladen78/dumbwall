@@ -16,3 +16,4 @@
 httpd
 .idea
 etc/certs
+etc/dumbwall.toml
