@@ -129,7 +129,7 @@ func (r *Routes) EditProfile(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (r *Routes) validateToken(req *http.Request) (int, error) {
+func (r *Routes) validateToken(w http.ResponseWriter, req *http.Request) (int, error) {
 	var id int
 
 	cookie, err := req.Cookie("user_session")
@@ -141,6 +141,7 @@ func (r *Routes) validateToken(req *http.Request) (int, error) {
 	claims, err := r.auth.Validate(cookie.Value)
 	if err != nil {
 		r.logger.Error("failed to validate token", zap.Error(err))
+		http.Redirect(w, req, "/signin", http.StatusFound)
 		return id, err
 	}
 

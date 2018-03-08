@@ -26,7 +26,7 @@ func (r *Routes) NewPost(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Routes) CreatePost(w http.ResponseWriter, req *http.Request) {
-	userID, err := r.validateToken(req)
+	userID, err := r.validateToken(w, req)
 	if err != nil {
 		r.logger.Error("failed to validate token", zap.Error(err))
 		return
@@ -61,7 +61,7 @@ func (r *Routes) DeletePost(w http.ResponseWriter, req *http.Request) {
 func (r *Routes) UpPost(w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 
-	userID, err := r.validateToken(req)
+	userID, err := r.validateToken(w, req)
 	if err != nil {
 		http.Redirect(w, req, req.Referer(), http.StatusFound)
 		return
@@ -85,7 +85,7 @@ func (r *Routes) UpPost(w http.ResponseWriter, req *http.Request) {
 func (r *Routes) DownPost(w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 
-	userID, err := r.validateToken(req)
+	userID, err := r.validateToken(w, req)
 	if err != nil {
 		http.Redirect(w, req, req.Referer(), http.StatusFound)
 		return
