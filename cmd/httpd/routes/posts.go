@@ -107,5 +107,19 @@ func (r *Routes) DownPost(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Routes) Post(w http.ResponseWriter, req *http.Request) {
+	id, err := strconv.Atoi(req.URL.Query().Get(":id"))
+	if err != nil {
+		return
+	}
 
+	post, err := r.db.GetPost(id)
+	if err != nil {
+		r.logger.Error("failed to get post by id", zap.Error(err), zap.Int("id", id))
+		return
+	}
+
+	err = r.templates.ExecuteTemplate(w, "view_post", post)
+	if err != nil {
+		r.logger.Error("failed to render template", zap.Error(err))
+	}
 }

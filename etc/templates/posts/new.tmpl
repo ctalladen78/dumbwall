@@ -1,19 +1,24 @@
 {{ define "new_post" }}
 	{{ template "header" }}
 
+    <h2> Create a new post </h2>
 	<form method="post" action="/posts">
-		<label for="title">title</label>
-		<input required type="text" name="title" >
+        <div class="form-group">
+            <label for="title">title</label>
+            <input class="form-control" required type="text" name="title" >
+        </div>
 
-		<label for="body">text</label>
-		<input required type="text" name="body" >
+        <div class="form-group">
+            <label for="link">link</label>
+            <input class="form-control" type="text" name="link" >
 
-		or
+            or
 
-		<label for="link">link</label>
-		<input required type="text" name="body" >
+            <label for="body">text</label>
+            <textarea class="form-control" type="text" name="body" ></textarea>
+        </div>
 
-		<button type="submit">Create a post</button>
+		<button class="btn btn-primary" type="submit">Create a post</button>
 	</form>
 	
 	{{ template "footer" }}

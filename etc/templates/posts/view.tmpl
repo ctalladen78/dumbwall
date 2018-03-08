@@ -1,0 +1,27 @@
+{{ define "view_post" }}
+	{{ template "header" }}
+
+    <div>
+        <h2>{{ .Title }} </h2>
+        <p>{{ .Body }}</p>
+        <p>rating: {{ .Ups }}</p>
+        <p>{{ .CreatedAt }}</p>
+        <p>Created By: <a href="/users/{{.UserID}}">{{ .Meta.OwnerLogin }}</a></p>
+
+        <div class="row">
+            <div class="col-md-auto">
+                <form method=post action="/posts/{{.ID}}/up">
+                    <button type="submit" class="btn btn-primary btn-sm">up</button>
+                </form>
+            </div>
+
+            <div class="col-sm-1">
+                <form method=post action="/posts/{{.ID}}/down">
+                    <button type="submit" class="btn btn-secondary btn-sm">down</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+	{{ template "footer" }}
+{{ end }}

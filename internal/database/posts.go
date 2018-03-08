@@ -34,8 +34,10 @@ func (d *Database) CreatePost(userID int, post posts.Post) (posts.Post, error) {
 	return post, nil
 }
 
-func (d *Database) GetPost(id string) (posts.Post, error) {
+func (d *Database) GetPost(id int) (posts.Post, error) {
 	var p posts.Post
+
+	var updatedAt pq.NullTime
 
 	err := psql.
 		Select(
@@ -45,10 +47,13 @@ func (d *Database) GetPost(id string) (posts.Post, error) {
 			"posts.ups",
 			"posts.downs",
 			"posts.user_id",
+			"posts.updated_at",
+			"posts.created_at",
 			"users.login").
 		From("posts").
 		Join("users on posts.user_id = users.id").
 		RunWith(d.p.DB).
+		Where(sq.Eq{"posts.id": id}).
 		QueryRow().
 		Scan(
 			&p.Type,
@@ -56,6 +61,8 @@ func (d *Database) GetPost(id string) (posts.Post, error) {
 			&p.Body,
 			&p.Ups,
 			&p.Downs,
+			&p.UserID,
+			&updatedAt,
 			&p.CreatedAt,
 			&p.Meta.OwnerLogin,
 		)
@@ -64,6 +71,7 @@ func (d *Database) GetPost(id string) (posts.Post, error) {
 		return p, err
 	}
 
+	p.UpdatedAt = updatedAt.Time
 	p.Ups -= p.Downs
 
 	return p, nil
@@ -74,7 +82,7 @@ func (d *Database) UpdatePost(id string, p posts.Post) (posts.Post, error) {
 		SetMap(map[string]interface{}{
 			"title":      p.Title,
 			"body":       p.Body,
-			"updated_at": "now()",
+			"updated_at": sq.Expr("now()"),
 		}).
 		Where(sq.Eq{"id": id}).
 		RunWith(d.p.DB).
