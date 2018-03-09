@@ -92,6 +92,7 @@ func (d *Database) UpdatePost(id string, p posts.Post) (posts.Post, error) {
 }
 
 func (d *Database) VotePost(userID, postID int, actionType actions.Action) error {
+	println("down post")
 	tx, err := d.p.DB.Begin()
 	if err != nil {
 		return err
@@ -126,7 +127,6 @@ func (d *Database) UpPost(tx *sql.Tx, userID, postID int) error {
 	}
 
 	if done {
-		println("done")
 		err = d.DeleteAction(tx, actionID)
 		if err != nil {
 			return err
@@ -144,10 +144,12 @@ func (d *Database) UpPost(tx *sql.Tx, userID, postID int) error {
 			return err
 		}
 
-		println("score", score)
+		err = d.AddVote(userID, postID, actions.ActionNone)
+		if err != nil {
+			return err
+		}
 		return d.r.PutTop(postID, score)
 	}
-	println("not done")
 
 	err = d.CreateAction(tx, userID, postID, actions.ActionUp)
 	if err != nil {
@@ -166,6 +168,11 @@ func (d *Database) UpPost(tx *sql.Tx, userID, postID int) error {
 		return err
 	}
 
+	err = d.AddVote(userID, postID, actions.ActionUp)
+	if err != nil {
+		return err
+	}
+
 	return d.r.PutTop(postID, score)
 }
 
@@ -178,7 +185,6 @@ func (d *Database) DownPost(tx *sql.Tx, userID, postID int) error {
 	}
 
 	if done {
-		println("down done")
 		err = d.DeleteAction(tx, actionID)
 		if err != nil {
 			return err
@@ -196,10 +202,12 @@ func (d *Database) DownPost(tx *sql.Tx, userID, postID int) error {
 			return err
 		}
 
+		err = d.AddVote(userID, postID, actions.ActionNone)
+		if err != nil {
+			return err
+		}
 		return d.r.PutTop(postID, score)
 	}
-
-	println("down not done")
 
 	err = d.CreateAction(tx, userID, postID, actions.ActionDown)
 	if err != nil {
@@ -218,6 +226,10 @@ func (d *Database) DownPost(tx *sql.Tx, userID, postID int) error {
 		return err
 	}
 
+	err = d.AddVote(userID, postID, actions.ActionDown)
+	if err != nil {
+		return err
+	}
 	return d.r.PutTop(postID, score)
 }
 

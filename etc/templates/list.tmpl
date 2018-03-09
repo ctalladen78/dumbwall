@@ -12,13 +12,21 @@
                 <div class="row">
                     <div class="col-md-auto">
                         <form method=post action="/posts/{{.ID}}/up">
-                            <button type="submit" class="btn btn-primary btn-sm">up</button>
+                            {{ if eq .Meta.Action 1 }}
+                                <button type="submit" class="btn btn-primary btn-sm">up voted</button>
+                            {{ else }}
+                                <button type="submit" class="btn btn-primary btn-sm">up</button>
+                            {{ end }}
                         </form>
                     </div>
 
                     <div class="col-sm-1">
                         <form method=post action="/posts/{{.ID}}/down">
-                            <button type="submit" class="btn btn-secondary btn-sm">down</button>
+                            {{ if eq .Meta.Action 2 }}
+                                <button type="submit" class="btn btn-primary btn-sm">down voted</button>
+                            {{ else }}
+                                <button type="submit" class="btn btn-primary btn-sm">down</button>
+                            {{ end }}
                         </form>
                     </div>
                 </div>
