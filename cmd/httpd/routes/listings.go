@@ -3,6 +3,8 @@ package routes
 import (
 	"net/http"
 
+	"strconv"
+
 	"github.com/maksadbek/dumbwall/internal/posts"
 )
 
@@ -23,9 +25,16 @@ func (r *Routes) Best(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Routes) Top(w http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
+
+	var page, _ = strconv.Atoi(req.Form.Get("page"))
+	if page == 0 {
+		page = 1
+	}
+
 	userID, tokenErr := r.validateToken(w, req)
 
-	topPosts, errs := r.db.Top(0, 20)
+	topPosts, errs := r.db.Top((page*20)-20, page*20)
 	if len(errs) > 0 {
 		panic(errs)
 	}
@@ -56,9 +65,16 @@ func (r *Routes) Top(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Routes) Newest(w http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
+
+	var page, _ = strconv.Atoi(req.Form.Get("page"))
+	if page == 0 {
+		page = 1
+	}
+
 	userID, tokenErr := r.validateToken(w, req)
 
-	newestPosts, errs := r.db.Newest(0, 20)
+	newestPosts, errs := r.db.Newest((page*20)-20, page*20)
 	if len(errs) > 0 {
 		panic(errs)
 	}
