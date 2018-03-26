@@ -1,21 +1,11 @@
-package redis
-
-import (
-	"fmt"
-
-	redigo "github.com/garyburd/redigo/redis"
-)
+package database
 
 var uvotes = "uvotes_tmp:%d:%d"
 
-func (r *Redis) AddVote(userID, postID, voteType int) error {
-	c := r.pool.Get()
-	defer c.Close()
-
+func (d *Database) AddVote(userID, postID, voteType int) error {
 	if voteType == 0 {
-		println("deleting votes")
-		c.Do("SREM", fmt.Sprintf(uvotes, userID, 1), postID)
-		c.Do("SREM", fmt.Sprintf(uvotes, userID, 2), postID)
+		d.r.Do("SREM", fmt.Sprintf(uvotes, userID, 1), postID)
+		d.r.Do("SREM", fmt.Sprintf(uvotes, userID, 2), postID)
 		return nil
 	}
 
@@ -26,36 +16,36 @@ func (r *Redis) AddVote(userID, postID, voteType int) error {
 	return err
 }
 
-func (r *Redis) CheckVotes(userID int, postIDs ...int) ([]int, error) {
-	c := r.pool.Get()
-	defer c.Close()
-
+func (d *Database) CheckVotes(userID int, postIDs ...int) ([]int, error) {
 	var voteTypes = make([]int, 0, len(postIDs))
 
+	conn := r.r.Conn()
+	defer conn.Close()
+
 	for i := range postIDs {
-		err := c.Send("SISMEMBER", fmt.Sprintf(uvotes, userID, 1), postIDs[i])
+		err := conn.Send("SISMEMBER", fmt.Sprintf(uvotes, userID, 1), postIDs[i])
 		if err != nil {
 			return voteTypes, err
 		}
-		err = c.Send("SISMEMBER", fmt.Sprintf(uvotes, userID, 2), postIDs[i])
+
+		err = conn.Send("SISMEMBER", fmt.Sprintf(uvotes, userID, 2), postIDs[i])
 		if err != nil {
 			return voteTypes, err
 		}
 	}
 
-	err := c.Flush()
+	err := conn.Flush()
 	if err != nil {
-		panic(err)
 		return voteTypes, err
 	}
 
 	for i := 0; i < len(postIDs); i++ {
-		voteType1, err := redigo.Int(c.Receive())
+		voteType1, err := redigo.Int(conn.Receive())
 		if err != nil {
 			return voteTypes, err
 		}
 
-		voteType2, err := redigo.Int(c.Receive())
+		voteType2, err := redigo.Int(conn.Receive())
 		if err != nil {
 			return voteTypes, err
 		}

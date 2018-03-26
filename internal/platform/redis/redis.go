@@ -21,17 +21,28 @@ func New(addr string, maxIdle, maxActive, idleTimeout int) *Redis {
 	}
 }
 
-func (r *Redis) zrevrange(key string, b, e int) (reply []string, err error) {
+func (r *Redis) Zrevrange(key string, b, e int) (reply []string, err error) {
 	c := r.pool.Get()
 	defer c.Close()
 
 	return redigo.Strings(c.Do("ZREVRANGE", key, b, e))
 }
 
-func (r *Redis) zadd(key string, member int, score int64) error {
+func (r *Redis) Zadd(key string, member int, score int64) error {
 	c := r.pool.Get()
 	defer c.Close()
 
 	_, err := c.Do("ZADD", key, score, member)
 	return err
+}
+
+func (r *Redis) Do(commandName string, args ...interface{}) (interface{}, error) {
+	c := r.pool.Get()
+	defer c.Close()
+
+	return c.Do(commandName, args...)
+}
+
+func (r *Redis) Conn() redigo.Conn {
+	return r.pool.Get()
 }
