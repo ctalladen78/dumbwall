@@ -27,6 +27,8 @@ func (h *httpd) init(etcPath string) error {
 		return err
 	}
 
+	c.Routes.TemplatesDir = path.Join(etcPath, c.Routes.TemplatesDir)
+	c.Routes.Certs = path.Join(etcPath, c.Routes.Certs)
 	r, err := routes.New(c.Routes, db)
 	if err != nil {
 		return err
@@ -58,6 +60,10 @@ func (h *httpd) init(etcPath string) error {
 	m.Post("/users/create", http.HandlerFunc(r.CreateUser))
 	m.Post("/users/authenticate", http.HandlerFunc(r.Authenticate))
 	m.Get("/users/:id", http.HandlerFunc(r.User))
+
+	m.Get("/_version", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(version + "-" + branch + "-" + commit))
+	}))
 
 	m.Get("/", http.HandlerFunc(r.Best))
 

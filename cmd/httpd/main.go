@@ -6,7 +6,24 @@ import (
 )
 
 var (
-	etcPath = flag.String("conf", "/etc/dumbwall", "configuration directory")
+	version string
+	commit  string
+	branch  string
+)
+
+func init() {
+	if commit == "" {
+		commit = "unknown"
+	}
+
+	if branch == "" {
+		branch = "unknown"
+	}
+}
+
+var (
+	etcPath    = flag.String("conf", "/etc/dumbwall", "configuration directory")
+	listenAddr = flag.String("listen", ":80", "web server address")
 )
 
 func main() {
@@ -22,7 +39,7 @@ func main() {
 	http.Handle("/", server.mux)
 	println("starting web server")
 
-	if err = http.ListenAndServe(":1234", nil); err != nil {
+	if err = http.ListenAndServe(*listenAddr, nil); err != nil {
 		panic(err)
 	}
 }
