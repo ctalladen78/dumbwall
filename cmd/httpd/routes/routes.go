@@ -2,6 +2,8 @@ package routes
 
 import (
 	"html/template"
+	"os"
+	"path"
 
 	"github.com/maksadbek/dumbwall/internal/auth"
 	"github.com/maksadbek/dumbwall/internal/config"
@@ -18,7 +20,27 @@ type Routes struct {
 }
 
 func New(c config.Routes, db *database.Database) (*Routes, error) {
-	templates, err := template.ParseFiles(c.Templates...)
+	f, err := os.Open(c.TemplatesDir)
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := f.Readdir(-1)
+	if err != nil {
+		return nil, err
+	}
+
+	templateFiles := []string{}
+
+	for i := range files {
+		if files[i].IsDir() {
+			continue
+		}
+
+		templateFiles = append(templateFiles, path.Join(c.TemplatesDir, files[i].Name()))
+	}
+
+	templates, err := template.ParseFiles(templateFiles...)
 	if err != nil {
 		return nil, err
 	}

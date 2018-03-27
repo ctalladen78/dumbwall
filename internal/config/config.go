@@ -27,7 +27,7 @@ type Database struct {
 }
 
 type Routes struct {
-	Templates       []string `toml:"templates"`
-	RecaptchaSecret string   `toml:"recaptcha_secret"`
-	Certs           string   `toml:"certs"`
+	TemplatesDir    string `toml:"templates_dir"`
+	RecaptchaSecret string `toml:"recaptcha_secret"`
+	Certs           string `toml:"certs"`
 }
