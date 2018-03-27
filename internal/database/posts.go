@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"sort"
 
 	"github.com/lib/pq"
 	"github.com/maksadbek/dumbwall/internal/actions"
@@ -30,7 +29,7 @@ func (d *Database) CreatePost(userID int, post posts.Post) (posts.Post, error) {
 	post.CreatedAt = createdAt.Time
 	post.UpdatedAt = updatedAt.Time
 
-	d.r.PutNew(post.ID, post.CreatedAt.Unix())
+	d.PutNew(post.ID, post.CreatedAt.Unix())
 	return post, nil
 }
 
@@ -148,7 +147,7 @@ func (d *Database) UpPost(tx *sql.Tx, userID, postID int) error {
 		if err != nil {
 			return err
 		}
-		return d.r.PutTop(postID, score)
+		return d.PutTop(postID, score)
 	}
 
 	err = d.CreateAction(tx, userID, postID, actions.ActionUp)
@@ -173,7 +172,7 @@ func (d *Database) UpPost(tx *sql.Tx, userID, postID int) error {
 		return err
 	}
 
-	return d.r.PutTop(postID, score)
+	return d.PutTop(postID, score)
 }
 
 func (d *Database) DownPost(tx *sql.Tx, userID, postID int) error {
@@ -206,7 +205,7 @@ func (d *Database) DownPost(tx *sql.Tx, userID, postID int) error {
 		if err != nil {
 			return err
 		}
-		return d.r.PutTop(postID, score)
+		return d.PutTop(postID, score)
 	}
 
 	err = d.CreateAction(tx, userID, postID, actions.ActionDown)
@@ -230,7 +229,7 @@ func (d *Database) DownPost(tx *sql.Tx, userID, postID int) error {
 	if err != nil {
 		return err
 	}
-	return d.r.PutTop(postID, score)
+	return d.PutTop(postID, score)
 }
 
 func (d *Database) Delete(id uint64) error {
@@ -241,42 +240,6 @@ func (d *Database) Delete(id uint64) error {
 		Exec()
 
 	return err
-}
-
-func (d *Database) Newest(begin, end int) ([]posts.Post, []error) {
-	ids, err := d.r.Newest(begin, end)
-	if err != nil {
-		return nil, []error{err}
-	}
-
-	posts, errs := d.GetPosts(ids)
-	if len(errs) > 0 {
-		return posts, errs
-	}
-
-	sort.Slice(posts, func(i, j int) bool {
-		return posts[i].CreatedAt.Unix() > posts[j].CreatedAt.Unix()
-	})
-
-	return posts, errs
-}
-
-func (d *Database) Top(begin, end int) ([]posts.Post, []error) {
-	ids, err := d.r.Top(begin, end)
-	if err != nil {
-		return nil, []error{err}
-	}
-
-	posts, errs := d.GetPosts(ids)
-	if len(errs) > 0 {
-		return posts, errs
-	}
-
-	sort.Slice(posts, func(i, j int) bool {
-		return posts[i].Ups > posts[j].Ups
-	})
-
-	return posts, errs
 }
 
 func (d *Database) GetPosts(ids []string) ([]posts.Post, []error) {
