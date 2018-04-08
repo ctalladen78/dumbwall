@@ -124,6 +124,17 @@ func (r *Routes) Post(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if userID, err := r.validateToken(w, req); err == nil {
+		action, err := r.db.CheckVotes(userID, id)
+		if err != nil {
+			r.logger.Error("faield check vote", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		post.Meta.Action = action[0]
+	}
+
 	err = r.templates.ExecuteTemplate(w, "view_post", post)
 	if err != nil {
 		r.logger.Error("failed to render template", zap.Error(err))
