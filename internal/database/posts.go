@@ -30,6 +30,7 @@ func (d *Database) CreatePost(userID int, post posts.Post) (posts.Post, error) {
 	post.UpdatedAt = updatedAt.Time
 
 	d.PutNew(post.ID, post.CreatedAt.Unix())
+	d.PutTop(post.ID, 0)
 	return post, nil
 }
 
