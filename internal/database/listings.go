@@ -44,7 +44,7 @@ func (d *Database) Top(b, e int) ([]posts.Post, []error) {
 	}
 
 	sort.Slice(posts, func(i, j int) bool {
-		return posts[j].Ups > posts[j].Ups
+		return posts[i].Ups > posts[j].Ups
 	})
 
 	return posts, errs
