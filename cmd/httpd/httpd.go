@@ -15,8 +15,6 @@ type httpd struct {
 }
 
 func (h *httpd) init(etcPath string) error {
-	println("init httpd")
-
 	c, err := config.New(path.Join(etcPath, "dumbwall.toml"))
 	if err != nil {
 		return err
@@ -35,6 +33,8 @@ func (h *httpd) init(etcPath string) error {
 	}
 
 	m := pat.New()
+
+	m.Get("/", http.HandlerFunc(r.Newest))
 
 	m.Get("/posts/new", http.HandlerFunc(r.NewPost))
 	m.Post("/posts", http.HandlerFunc(r.CreatePost))

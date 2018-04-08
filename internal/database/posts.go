@@ -91,7 +91,6 @@ func (d *Database) UpdatePost(id string, p posts.Post) (posts.Post, error) {
 }
 
 func (d *Database) VotePost(userID, postID int, actionType actions.Action) error {
-	println("down post")
 	tx, err := d.p.DB.Begin()
 	if err != nil {
 		return err

@@ -29,6 +29,7 @@ func (r *Routes) CreatePost(w http.ResponseWriter, req *http.Request) {
 	userID, err := r.validateToken(w, req)
 	if err != nil {
 		r.logger.Error("failed to validate token", zap.Error(err))
+		http.Redirect(w, req, "/signin", http.StatusSeeOther)
 		return
 	}
 
@@ -47,7 +48,7 @@ func (r *Routes) CreatePost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	r.logger.Debug("created post", zap.Any("post", post))
+	http.Redirect(w, req, "/posts/"+strconv.Itoa(post.ID), http.StatusFound)
 }
 
 func (r *Routes) UpdatePost(w http.ResponseWriter, req *http.Request) {
@@ -63,23 +64,24 @@ func (r *Routes) UpPost(w http.ResponseWriter, req *http.Request) {
 
 	userID, err := r.validateToken(w, req)
 	if err != nil {
-		http.Redirect(w, req, req.Referer(), http.StatusFound)
+		r.logger.Error("failed to validate token", zap.Error(err))
+		http.Redirect(w, req, "/signin", http.StatusSeeOther)
 		return
 	}
 
 	postID, err := strconv.Atoi(req.URL.Query().Get(":id"))
 	if err != nil {
-		http.Redirect(w, req, req.Referer(), http.StatusFound)
+		r.logger.Error("failed to get id", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	err = r.db.VotePost(userID, postID, actions.ActionUp)
 	if err != nil {
-		http.Redirect(w, req, req.Referer(), http.StatusFound)
+		r.logger.Error("failed to vote post", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	http.Redirect(w, req, req.Referer(), http.StatusFound)
 }
 
 func (r *Routes) DownPost(w http.ResponseWriter, req *http.Request) {
@@ -87,39 +89,44 @@ func (r *Routes) DownPost(w http.ResponseWriter, req *http.Request) {
 
 	userID, err := r.validateToken(w, req)
 	if err != nil {
-		http.Redirect(w, req, req.Referer(), http.StatusFound)
+		r.logger.Error("failed to validate token", zap.Error(err))
+		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
 	}
 
 	postID, err := strconv.Atoi(req.URL.Query().Get(":id"))
 	if err != nil {
-		http.Redirect(w, req, req.Referer(), http.StatusFound)
+		r.logger.Error("failed to get id", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	err = r.db.VotePost(userID, postID, actions.ActionDown)
 	if err != nil {
-		http.Redirect(w, req, req.Referer(), http.StatusFound)
+		r.logger.Error("failed to vote post", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	http.Redirect(w, req, req.Referer(), http.StatusFound)
 }
 
 func (r *Routes) Post(w http.ResponseWriter, req *http.Request) {
 	id, err := strconv.Atoi(req.URL.Query().Get(":id"))
 	if err != nil {
+		r.logger.Error("invalid post id", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	post, err := r.db.GetPost(id)
 	if err != nil {
 		r.logger.Error("failed to get post by id", zap.Error(err), zap.Int("id", id))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	err = r.templates.ExecuteTemplate(w, "view_post", post)
 	if err != nil {
 		r.logger.Error("failed to render template", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/maksadbek/dumbwall/internal/posts"
+	"go.uber.org/zap"
 )
 
 func (r *Routes) Hot(w http.ResponseWriter, req *http.Request) {
@@ -36,18 +37,17 @@ func (r *Routes) Top(w http.ResponseWriter, req *http.Request) {
 
 	topPosts, errs := r.db.Top((page*20)-20, page*20)
 	if len(errs) > 0 {
-		panic(errs)
+		r.logger.Error("failed to get top posts", zap.Errors("errors", errs))
 	}
 
 	if tokenErr == nil {
 		for i, v := range topPosts {
 			userAction, err := r.db.CheckVotes(userID, v.ID)
 			if err != nil {
-				panic(err)
-				return
+				r.logger.Error("failed check vote", zap.Error(err), zap.Int("post_id", v.ID))
+				continue
 			}
 
-			println(v.ID, userAction[0])
 			topPosts[i].Meta.Action = userAction[0]
 		}
 	}
@@ -60,7 +60,7 @@ func (r *Routes) Top(w http.ResponseWriter, req *http.Request) {
 
 	err := r.templates.ExecuteTemplate(w, "list", ctx)
 	if err != nil {
-		panic(err)
+		r.logger.Error("failed to render template", zap.Error(err))
 	}
 }
 
@@ -76,18 +76,20 @@ func (r *Routes) Newest(w http.ResponseWriter, req *http.Request) {
 
 	newestPosts, errs := r.db.Newest((page*20)-20, page*20)
 	if len(errs) > 0 {
-		panic(errs)
+		r.logger.Error("failed to get newewst list", zap.Errors("errors", errs))
+		http.Redirect(w, req, "/", http.StatusFound)
+		return
 	}
 
 	if tokenErr == nil {
 		for i, v := range newestPosts {
 			userAction, err := r.db.CheckVotes(userID, v.ID)
 			if err != nil {
-				panic(err)
+				r.logger.Error("failed to check user votes", zap.Error(err))
+				http.Redirect(w, req, "/", http.StatusFound)
 				return
 			}
 
-			println(v.ID, userAction[0])
 			newestPosts[i].Meta.Action = userAction[0]
 		}
 	}
@@ -98,5 +100,9 @@ func (r *Routes) Newest(w http.ResponseWriter, req *http.Request) {
 		Posts: newestPosts,
 	}
 
-	r.templates.ExecuteTemplate(w, "list", ctx)
+	err := r.templates.ExecuteTemplate(w, "list", ctx)
+	if err != nil {
+		http.Redirect(w, req, "/", http.StatusFound)
+		r.logger.Error("failed to render template", zap.Error(err))
+	}
 }

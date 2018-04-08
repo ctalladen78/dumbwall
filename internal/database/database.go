@@ -15,8 +15,6 @@ type Database struct {
 }
 
 func New(c config.Database) (*Database, error) {
-	println("init database")
-
 	p, err := postgres.New(c.Postgres.DSN)
 	if err != nil {
 		return nil, err

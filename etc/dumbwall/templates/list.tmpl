@@ -10,15 +10,15 @@
 
                             <p>{{ .Body }}</p>
                             {{ if eq .Meta.Action 1 }}
-                                <button type="submit" class="btn btn-secondary btn-sm">up voted</button>
+                                <button onclick="upVote({{.ID}})" type="submit" class="btn btn-secondary btn-sm">up voted</button>
                             {{ else }}
-                                <button type="submit" class="btn btn-secondary btn-sm">up</button>
+                                <button onclick="upVote({{.ID}})" type="submit" class="btn btn-secondary btn-sm">up</button>
                             {{ end }}
                             <span>{{ .Ups }}</span>
                             {{ if eq .Meta.Action 2 }}
-                                <button type="submit" class="btn btn-secondary btn-sm">down voted</button>
+                                <button onclick="downVote({{.ID}})" type="submit" class="btn btn-secondary btn-sm">down voted</button>
                             {{ else }}
-                                <button type="submit" class="btn btn-secondary btn-sm">down</button>
+                                <button onclick="downVote({{.ID}})" type="submit" class="btn btn-secondary btn-sm">down</button>
                             {{ end }}
 
                             <span class="mx-1"></span>
@@ -34,6 +34,20 @@
                 {{ end }}
             </div>
         </div>
+
+        <script>
+            function upVote(postID) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/posts/' + postID + '/up', true);
+                xhr.send(null);
+            }
+
+            function downVote(postID) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/posts/' + postID + '/down', true);
+                xhr.send(null);
+            }
+        </script>
 
 	{{ template "footer" }}
 {{ end }}

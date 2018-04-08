@@ -3,7 +3,6 @@ package routes
 import (
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -25,7 +24,7 @@ func (r *Routes) validateCaptcha(recaptchaResponse, remoteAddr string) error {
 
 	resp, err := http.PostForm("https://www.google.com/recaptcha/api/siteverify", recaptchaValues)
 	if err != nil {
-		println(err.Error())
+		r.logger.Error("failed to decode captcha", zap.Error(err))
 		return err
 	}
 
@@ -38,11 +37,12 @@ func (r *Routes) validateCaptcha(recaptchaResponse, remoteAddr string) error {
 	dec := json.NewDecoder(resp.Body)
 	err = dec.Decode(&captchaResponse)
 	if err != nil {
-		println(err.Error())
+		r.logger.Error("failed to decode captcha", zap.Error(err))
 		return err
 	}
-	println("captcha success", captchaResponse.Success)
+
 	if !captchaResponse.Success {
+		r.logger.Error("invalid captcha")
 		return errInvalidCaptchaResponse
 	}
 
@@ -50,10 +50,9 @@ func (r *Routes) validateCaptcha(recaptchaResponse, remoteAddr string) error {
 }
 
 func (r *Routes) CreateUser(w http.ResponseWriter, req *http.Request) {
-	println("create user")
 	err := req.ParseForm()
 	if err != nil {
-		println(err.Error())
+		r.logger.Error("failed to parse form", zap.Error(err))
 		return
 	}
 
@@ -95,7 +94,8 @@ func (r *Routes) CreateUser(w http.ResponseWriter, req *http.Request) {
 		Password: req.Form.Get("password1"),
 	})
 	if err != nil {
-		println(err.Error())
+		r.logger.Error("failed to create user", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -103,7 +103,8 @@ func (r *Routes) CreateUser(w http.ResponseWriter, req *http.Request) {
 		"user_id": strconv.FormatUint(user.ID, 10),
 	})
 	if err != nil {
-		println(err.Error())
+		r.logger.Error("failed to create user token", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -115,7 +116,6 @@ func (r *Routes) CreateUser(w http.ResponseWriter, req *http.Request) {
 		Expires: time.Now().Add(time.Duration(90) * time.Hour),
 	})
 
-	println("redirect")
 	http.Redirect(w, req, "/me", http.StatusFound)
 
 	return
@@ -135,6 +135,7 @@ func (r *Routes) validateToken(w http.ResponseWriter, req *http.Request) (int, e
 	cookie, err := req.Cookie("user_session")
 	if err != nil {
 		r.logger.Error("failed to get token", zap.Error(err))
+		http.Redirect(w, req, "/signin", http.StatusSeeOther)
 		return id, err
 	}
 
@@ -158,33 +159,35 @@ func (r *Routes) Profile(w http.ResponseWriter, req *http.Request) {
 	cookie, err := req.Cookie("user_session")
 	if err != nil {
 		r.logger.Error("failed to get token", zap.Error(err))
-		http.Redirect(w, req, "/", http.StatusOK)
+		http.Redirect(w, req, "/signin", http.StatusSeeOther)
 		return
 	}
 
-	println("cookie", cookie.Value)
 	claims, err := r.auth.Validate(cookie.Value)
 	if err != nil {
 		r.logger.Error("failed to validate token", zap.Error(err))
-		http.Redirect(w, req, "/", http.StatusOK)
+		http.Redirect(w, req, "/signin", http.StatusSeeOther)
 		return
 	}
 
 	id, err := strconv.ParseInt(claims["user_id"].(string), 10, 64)
 	if err != nil {
-		r.logger.Error("blet", zap.Error(err))
+		r.logger.Error("invalid user id in token", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	user, err := r.db.GetUser(uint64(id))
 	if err != nil {
-		r.logger.Error("blet", zap.Error(err))
+		r.logger.Error("failed to get user", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	err = r.templates.ExecuteTemplate(w, "profile", user)
 	if err != nil {
-		r.logger.Error("blet", zap.Error(err))
+		r.logger.Error("failed to render template", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
@@ -192,21 +195,22 @@ func (r *Routes) Profile(w http.ResponseWriter, req *http.Request) {
 func (r *Routes) User(w http.ResponseWriter, req *http.Request) {
 	id, err := valid.ToInt(req.URL.Query().Get(":id"))
 	if err != nil {
-		println(err.Error())
+		r.logger.Error("invalid user id", zap.Error(err))
 		http.Redirect(w, req, "/404", http.StatusSeeOther)
 		return
 	}
 
 	user, err := r.db.GetUser(uint64(id))
 	if err != nil {
-		println(err.Error())
-		io.WriteString(w, "not found")
+		r.logger.Error("failed to find user id", zap.Error(err))
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	err = r.templates.ExecuteTemplate(w, "profile", user)
 	if err != nil {
-		println(err.Error())
+		r.logger.Error("failed to render template", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
@@ -218,7 +222,7 @@ func (r *Routes) Authenticate(w http.ResponseWriter, req *http.Request) {
 
 	id, err := r.db.Authenticate(login, password)
 	if err != nil {
-		r.logger.Error("password do not match", zap.Error(err))
+		r.logger.Error("incorrrect password or login", zap.Error(err))
 		http.Redirect(w, req, "/signin", http.StatusSeeOther)
 		return
 	}
@@ -227,7 +231,7 @@ func (r *Routes) Authenticate(w http.ResponseWriter, req *http.Request) {
 		"user_id": strconv.FormatInt(id, 10),
 	})
 	if err != nil {
-		println(err.Error())
+		r.logger.Error("failed to create jwt", zap.Error(err))
 		return
 	}
 

@@ -116,7 +116,6 @@ func (d *Database) Authenticate(login, passwd string) (int64, error) {
 		id           int64
 	)
 
-	println(login, passwd)
 	err := psql.Select("id", "password").
 		From("users").
 		Where(sq.Eq{"login": login}).

@@ -37,7 +37,6 @@ func main() {
 	}
 
 	http.Handle("/", server.mux)
-	println("starting web server")
 
 	if err = http.ListenAndServe(*listenAddr, nil); err != nil {
 		panic(err)
