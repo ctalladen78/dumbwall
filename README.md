@@ -1,3 +1,5 @@
+Yet another failure
+
 # dumbwall
 HackerNews like toy app to post whatever you want and rate other posts
 
@@ -19,4 +21,3 @@ _Generate priv/pub keys for JWT signing:_
 ssh-keygen -t rsa -b 4096 -f private.key
 openssl rsa -in private.key -pubout -outform PEM -out public.key
 ```
-
